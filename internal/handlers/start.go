@@ -1,9 +1,17 @@
 package handlers
 
-import "gopkg.in/telebot.v3"
+import (
+	"gopkg.in/telebot.v3"
+	"suai-queue/internal/service"
+)
 
-func StartHandler(b *telebot.Bot) {
+func StartHandler(db *service.StudentService, b *telebot.Bot) {
 	b.Handle("/start", func(c telebot.Context) error {
+		userID := c.Sender().ID
+		if db.Exists(userID) {
+			return c.Send("С возвращением! Выберите действие ниже 👇", MainMenu)
+		}
+
 		return c.Send("Добро пожаловать! Используйте /register для регистрации")
 	})
 }

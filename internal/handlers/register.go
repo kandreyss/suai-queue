@@ -17,7 +17,7 @@ func RegisterHandler(db *service.StudentService, b *telebot.Bot) {
 		userID := c.Sender().ID
 
 		if db.Exists(userID) {
-			return c.Send("Вы уже зарегистрированы! Приятного использования 😊")
+			return c.Send("Вы уже зарегистрированы! Приятного использования 😊", MainMenu)
 		}
 
 		sessions[userID] = NewUserSession("waiting_name")
@@ -62,6 +62,7 @@ func RegisterHandler(db *service.StudentService, b *telebot.Bot) {
 
 			return c.Send(
 				fmt.Sprintf("Регистрация завершена! Добро пожаловать, %s", st.Name),
+				MainMenu,
 			)
 		}
 
