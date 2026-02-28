@@ -31,6 +31,10 @@ func (serv *StudentService) Exists(id int64) bool {
 	serv.mutex.Lock()
 	defer serv.mutex.Unlock()
 
+	return serv.exists(id)
+}
+
+func (serv *StudentService) exists(id int64) bool {
 	for _, st := range serv.students {
 		if st.ID == id {
 			return true
@@ -43,7 +47,7 @@ func (serv *StudentService) Insert(s *student.Student) error {
 	serv.mutex.Lock()
 	defer serv.mutex.Unlock()
 
-	if serv.Exists(s.ID) {
+	if serv.exists(s.ID) {
 		return ErrStudentInDb
 	}
 

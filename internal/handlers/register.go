@@ -61,7 +61,7 @@ func RegisterHandler(db *service.StudentService, b *telebot.Bot) {
 			delete(sessions, userID)
 
 			return c.Send(
-				fmt.Sprintf("Регистрация завершена! Добро пожаловать, %s 🎉", st.Name),
+				fmt.Sprintf("Регистрация завершена! Добро пожаловать, %s", st.Name),
 			)
 		}
 
