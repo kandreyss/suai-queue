@@ -17,7 +17,7 @@ func (q *Queue) New() *Queue {
 }
 
 func (q *Queue) Pop() (*student.Student, error) {
-	if(len(q.Users) == 0) {
+	if len(q.Users) == 0 {
 		return nil, ErrQueueIsEmpty
 	}
 	q.mutex.Lock()
@@ -26,9 +26,8 @@ func (q *Queue) Pop() (*student.Student, error) {
 	q.mutex.Unlock()
 
 	return &firstUser, nil
-} 
+}
 
 func (q *Queue) Push(user student.Student) {
 	q.Users = append(q.Users, user)
 }
-
