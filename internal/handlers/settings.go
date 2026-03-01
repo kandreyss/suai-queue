@@ -3,6 +3,7 @@ package handlers
 import (
 	"suai-queue/internal/handlers/sessions"
 	"suai-queue/internal/service"
+	"suai-queue/pkg/queue"
 
 	"gopkg.in/telebot.v3"
 )
@@ -33,7 +34,7 @@ func SettingsHandler(db *service.StudentService, b *telebot.Bot) {
 	})
 }
 
-func handleSetting(db *service.StudentService, c telebot.Context, userID int64, session *sessions.UserSession) error {
+func handleSetting(db *service.StudentService, q *queue.Queue, c telebot.Context, userID int64, session *sessions.UserSession) error {
 	switch session.State {
 	case sessions.StateWaitingSetting:
 		setting := c.Text()
@@ -67,6 +68,11 @@ func handleSetting(db *service.StudentService, c telebot.Context, userID int64, 
 		}
 
 		sessions.Store.Delete(userID)
+		for i := range q.Users {
+			if q.Users[i].ID == userID {
+				q.Users[i].Name = newName
+			}
+		}
 		return c.Send("Имя успешно обновлено ✅", MainMenu)
 	}
 

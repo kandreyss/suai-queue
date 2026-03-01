@@ -43,7 +43,7 @@ func main() {
 
 	handlers.RegisterHandler(studentService, bot)
 	handlers.SettingsHandler(studentService, bot)
-	handlers.TextRouterHandler(studentService, bot)
+	handlers.TextRouterHandler(studentService, q, bot)
 	handlers.StartHandler(studentService, bot)
 	handlers.QueueHandlers(studentService, q, bot)
 	handlers.HelpHandler(bot)
