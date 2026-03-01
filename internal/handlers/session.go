@@ -11,3 +11,9 @@ func NewUserSession(state string) *UserSession {
 		TempData: make(map[string]string),
 	}
 }
+
+var sessionsStore = NewSessionStore()
+
+func endSession(userID int64) {
+	sessionsStore.Delete(userID)
+}

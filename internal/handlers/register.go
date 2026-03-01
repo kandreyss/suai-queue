@@ -5,67 +5,61 @@ import (
 
 	"suai-queue/internal/service"
 	"suai-queue/pkg/student"
-
+	
 	"gopkg.in/telebot.v3"
 )
 
-var sessions = make(map[int64]*UserSession)
-
 func RegisterHandler(db *service.StudentService, b *telebot.Bot) {
+	b.Handle("/register", handleRegisterCommand(db))
+}
 
-	b.Handle("/register", func(c telebot.Context) error {
+func handleRegisterCommand(db *service.StudentService) func(telebot.Context) error {
+	return func(c telebot.Context) error {
 		userID := c.Sender().ID
 
 		if db.Exists(userID) {
 			return c.Send("Вы уже зарегистрированы! Приятного использования 😊", MainMenu)
 		}
 
-		sessions[userID] = NewUserSession("waiting_name")
+		sessionsStore.Set(userID, NewUserSession(StateWaitingName))
+		return c.Send("Введите ваше имя:", &telebot.ReplyMarkup{ForceReply: true})
+	}
+}
 
-		return c.Send("Введите ваше имя:", &telebot.ReplyMarkup{
-			ForceReply: true,
-		})
-	})
-
-	b.Handle(telebot.OnText, func(c telebot.Context) error {
-		userID := c.Sender().ID
-		session, ok := sessions[userID]
-
-		if !ok {
-			return nil
+func handleRegisterNameStep(db *service.StudentService, c telebot.Context, userID int64, session *UserSession) error {
+	name, err := readAndValidateName(c)
+	if err != nil {
+		if err == ErrNameTooShort {
+			return c.Send("Имя слишком короткое. Введите корректное имя:")
 		}
+		return c.Send("Некорректное имя. Попробуйте ещё раз:")
+	}
 
-		switch session.State {
-
-		case "waiting_name":
-			name := c.Text()
-
-			if len(name) < 2 {
-				return c.Send("Имя слишком короткое. Введите корректное имя:")
-			}
-
-			st := student.NewStudent(
-				userID,
-				c.Sender().Username,
-				name,
-			)
-
-			if err := db.Insert(st); err != nil {
-				if err == service.ErrStudentInDb {
-					delete(sessions, userID)
-					return c.Send("Вы уже зарегистрированы!")
-				}
-				return c.Send("Ошибка при сохранении данных. Попробуйте позже.")
-			}
-
-			delete(sessions, userID)
-
-			return c.Send(
-				fmt.Sprintf("Регистрация завершена! Добро пожаловать, %s", st.Name),
-				MainMenu,
-			)
+	st, err := registerStudent(db, c, userID, name)
+	if err != nil {
+		if err == service.ErrStudentInDb {
+			endSession(userID)
+			return c.Send("Вы уже зарегистрированы!", MainMenu)
 		}
+		return c.Send("Ошибка при сохранении данных. Попробуйте позже.")
+	}
 
-		return nil
-	})
+	endSession(userID)
+	return c.Send(
+		fmt.Sprintf("Регистрация завершена! Добро пожаловать, %s", st.Name),
+		MainMenu,
+	)
+}
+
+func registerStudent(db *service.StudentService, c telebot.Context, userID int64, name string) (*student.Student, error) {
+	username := c.Sender().Username
+	if username == "" {
+		username = "NoUsername"
+	}
+
+	st := student.NewStudent(userID, username, name)
+	if err := db.Insert(st); err != nil {
+		return nil, err
+	}
+	return st, nil
 }

@@ -77,3 +77,17 @@ func (serv *StudentService) Remove(ID int64) error {
 	serv.students = append(serv.students[:i], serv.students[i+1:]...)
 	return nil
 }
+
+func (serv *StudentService) UpdateName(id int64, newName string) error {
+	serv.mutex.Lock()
+	defer serv.mutex.Unlock()
+
+	for _, s := range serv.students {
+		if s.ID == id {
+			s.Name = newName
+			return nil
+		}
+	}
+
+	return ErrStudentNotFound
+}

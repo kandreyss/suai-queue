@@ -57,7 +57,9 @@ func main() {
 	}()
 
 	handlers.RegisterHandler(studentService, bot)
-	handlers.StartHandler(bot)
+	handlers.SettingsHandler(studentService, bot)
+	handlers.TextRouterHandler(studentService, bot)
+	handlers.StartHandler(studentService, bot)
 
 	go func() {
 		stop := make(chan os.Signal, 1)
