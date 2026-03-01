@@ -78,6 +78,19 @@ func (serv *StudentService) Remove(ID int64) error {
 	return nil
 }
 
+func (serv *StudentService) GetName(id int64) (string) {
+	serv.mutex.Lock()
+	defer serv.mutex.Unlock()
+
+	for _, s := range serv.students {
+		if s.ID == id {
+			return s.Name
+		}
+	}
+
+	return ""
+}
+
 func (serv *StudentService) UpdateName(id int64, newName string) error {
 	serv.mutex.Lock()
 	defer serv.mutex.Unlock()

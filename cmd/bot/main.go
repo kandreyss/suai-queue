@@ -11,6 +11,7 @@ import (
 	"suai-queue/internal/config"
 	"suai-queue/internal/handlers"
 	"suai-queue/internal/service"
+	"suai-queue/pkg/queue"
 
 	"gopkg.in/telebot.v3"
 )
@@ -30,6 +31,7 @@ func main() {
 	}
 
 	studentService := service.NewStudentService()
+	q := queue.NewQueue()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -60,6 +62,7 @@ func main() {
 	handlers.SettingsHandler(studentService, bot)
 	handlers.TextRouterHandler(studentService, bot)
 	handlers.StartHandler(studentService, bot)
+	handlers.QueueHandlers(studentService, q, bot)
 
 	go func() {
 		stop := make(chan os.Signal, 1)
