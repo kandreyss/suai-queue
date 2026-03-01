@@ -1,4 +1,4 @@
-package handlers
+package sessions
 
 const (
 	StateWaitingName     = "waiting_name"

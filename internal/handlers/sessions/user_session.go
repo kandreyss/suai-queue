@@ -1,4 +1,4 @@
-package handlers
+package sessions
 
 type UserSession struct {
 	State    string
@@ -13,7 +13,3 @@ func NewUserSession(state string) *UserSession {
 }
 
 var sessionsStore = NewSessionStore()
-
-func endSession(userID int64) {
-	sessionsStore.Delete(userID)
-}
