@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"suai-queue/internal/service"
 	"suai-queue/internal/handlers/sessions"
+	"suai-queue/internal/service"
 
 	"gopkg.in/telebot.v3"
 )

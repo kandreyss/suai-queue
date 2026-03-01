@@ -6,7 +6,7 @@ type Student struct {
 	ID            int64
 	TelegramLogin string
 	Name          string
-	TimeToQueue   time.Time
+	TimeInQueue   time.Time
 }
 
 func NewStudent(id int64, login string, name string) *Student {

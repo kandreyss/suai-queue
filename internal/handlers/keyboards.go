@@ -5,9 +5,9 @@ import "gopkg.in/telebot.v3"
 var (
 	MainMenu = &telebot.ReplyMarkup{ResizeKeyboard: true}
 
-	ButtonJoinInQueue = MainMenu.Text("Встать в очередь")
-	ButtonViewQueue   = MainMenu.Text("Посмотреть очередь")
-	ButtonLeave       = MainMenu.Text("Выйти из очереди")
+	ButtonJoinInQueue = MainMenu.Text("➕Встать в очередь")
+	ButtonViewQueue   = MainMenu.Text("📋Посмотреть очередь")
+	ButtonLeave       = MainMenu.Text("➖Выйти из очереди")
 )
 
 var (

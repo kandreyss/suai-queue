@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strings"
+
 	"suai-queue/internal/handlers/sessions"
 	"suai-queue/internal/service"
 
@@ -10,22 +12,26 @@ import (
 func TextRouterHandler(db *service.StudentService, b *telebot.Bot) {
 	b.Handle(telebot.OnText, func(c telebot.Context) error {
 		userID := c.Sender().ID
+		_ = strings.TrimSpace(c.Text())
 
-		session, ok := sessions.Store.Get(userID)
-		if !ok {
-			return nil
+		if session, ok := sessions.Store.Get(userID); ok {
+			switch session.State {
+			case sessions.StateWaitingName:
+				return handleRegisterName(db, c, userID, session)
+
+			case sessions.StateWaitingSetting, sessions.StateWaitingNewName:
+				return handleSetting(db, c, userID, session)
+
+			default:
+
+				sessions.Store.Delete(userID)
+			}
 		}
 
-		switch session.State {
-		case sessions.StateWaitingName:
-			return handleRegisterName(db, c, userID, session)
-			
-		case sessions.StateWaitingSetting, sessions.StateWaitingNewName:
-			return handleSetting(db, c, userID, session)
-			
-		default:
-			sessions.Store.Delete(userID)
-			return nil
+		if !db.Exists(userID) {
+			return c.Send("Для использования бота, необходимо зарегистрироваться с помощью /register")
 		}
+
+		return c.Send("Не понял сообщение. Используй кнопки меню 👇", MainMenu)
 	})
 }

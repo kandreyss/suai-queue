@@ -23,7 +23,7 @@ func (q *Queue) Pop() (*student.Student, error) {
 	if len(q.Users) == 0 {
 		return nil, ErrQueueIsEmpty
 	}
-	
+
 	firstUser := q.Users[0]
 	q.Users = q.Users[1:]
 
@@ -36,7 +36,7 @@ func (q *Queue) Push(user *student.Student) (int, error) {
 
 	for i, u := range q.Users {
 		if u.ID == user.ID {
-			return i+1, ErrStudentInQueue
+			return i + 1, ErrStudentInQueue
 		}
 	}
 

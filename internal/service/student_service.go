@@ -78,7 +78,7 @@ func (serv *StudentService) Remove(ID int64) error {
 	return nil
 }
 
-func (serv *StudentService) GetName(id int64) (string) {
+func (serv *StudentService) GetName(id int64) string {
 	serv.mutex.Lock()
 	defer serv.mutex.Unlock()
 

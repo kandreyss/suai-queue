@@ -6,6 +6,8 @@ import (
 	"suai-queue/internal/service"
 	"suai-queue/pkg/queue"
 	"suai-queue/pkg/student"
+	"time"
+	"html"
 
 	"gopkg.in/telebot.v3"
 )
@@ -25,6 +27,7 @@ func handleJoinQueue(db *service.StudentService, q *queue.Queue) func(telebot.Co
 		}
 
 		newStudent := student.NewStudent(userID, c.Sender().Username, db.GetName(userID))
+		newStudent.TimeInQueue = time.Now()
 		position, err := q.Push(newStudent)
 		if err != nil {
 			return c.Send(fmt.Sprintf("Вы уже в очереди! Ваш номер: %d", position), MainMenu)
@@ -37,7 +40,7 @@ func handleJoinQueue(db *service.StudentService, q *queue.Queue) func(telebot.Co
 func handleLeaveQueue(db *service.StudentService, q *queue.Queue) func(telebot.Context) error {
 	return func(c telebot.Context) error {
 		userID := c.Sender().ID
-		
+
 		if !db.Exists(userID) {
 			return c.Send("Сначала нужно зарегистрироваться! Введите /register")
 		}
@@ -46,7 +49,7 @@ func handleLeaveQueue(db *service.StudentService, q *queue.Queue) func(telebot.C
 		if err != nil {
 			return c.Send("Вы не состоите в очереди", MainMenu)
 		}
-		
+
 		return c.Send("Вы вышли из очереди.", MainMenu)
 	}
 }
@@ -55,15 +58,23 @@ func handleViewQueue(q *queue.Queue) func(telebot.Context) error {
 	return func(c telebot.Context) error {
 		users := q.GetUsers()
 		if len(users) == 0 {
-			c.Send("Очередь пуста! Успей занять, пока пусто!", MainMenu)
+			return c.Send("Очередь пуста! Успей занять, пока пусто!", MainMenu)
 		}
 
-		var studentsList strings.Builder
-		studentsList.WriteString("*Текущая очередь:*\n\n")
-		for i, s := range q.GetUsers() {
-			fmt.Fprintf(&studentsList, "%d. %s @%s\n", i+1, s.Name, s.TelegramLogin)
+		var sb strings.Builder
+		sb.WriteString("<b>Текущая очередь:</b>\n\n")
+
+		for i, s := range users {
+			name := html.EscapeString(s.Name)
+			login := html.EscapeString(s.TelegramLogin)
+
+			if c.Sender().ID == s.ID {
+				fmt.Fprintf(&sb, "<b>%d. %s @%s (Вы)</b>\n", i+1, name, login)
+			} else {
+				fmt.Fprintf(&sb, "%d. %s @%s\n", i+1, name, login)
+			}
 		}
 
-		return c.Send(studentsList.String(), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown}, MainMenu)
+		return c.Send(sb.String(), &telebot.SendOptions{ParseMode: telebot.ModeHTML}, MainMenu)
 	}
 }
