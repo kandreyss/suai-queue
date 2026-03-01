@@ -6,8 +6,8 @@ var (
 	MainMenu = &telebot.ReplyMarkup{ResizeKeyboard: true}
 
 	ButtonJoinInQueue = MainMenu.Text("Встать в очередь")
-	ButtonViewQueue = MainMenu.Text("Посмотреть очередь")
-	ButtonLeave = MainMenu.Text("Выйти из очереди")
+	ButtonViewQueue   = MainMenu.Text("Посмотреть очередь")
+	ButtonLeave       = MainMenu.Text("Выйти из очереди")
 )
 
 var (
@@ -21,7 +21,7 @@ func init() {
 		MainMenu.Row(ButtonJoinInQueue, ButtonLeave),
 		MainMenu.Row(ButtonViewQueue),
 	)
-	
+
 	SettingsMenu.Reply(
 		SettingsMenu.Row(ButtonChangeName),
 	)

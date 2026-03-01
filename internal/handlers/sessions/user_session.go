@@ -12,4 +12,4 @@ func NewUserSession(state string) *UserSession {
 	}
 }
 
-var sessionsStore = NewSessionStore()
+var Store = NewSessionStore()

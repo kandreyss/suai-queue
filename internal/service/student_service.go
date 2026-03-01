@@ -14,7 +14,7 @@ type StudentService struct {
 func NewStudentService() *StudentService {
 	return &StudentService{
 		students: make([]student.Student, 0, 10),
-		mutex: sync.Mutex{},
+		mutex:    sync.Mutex{},
 	}
 }
 
@@ -82,9 +82,9 @@ func (serv *StudentService) UpdateName(id int64, newName string) error {
 	serv.mutex.Lock()
 	defer serv.mutex.Unlock()
 
-	for _, s := range serv.students {
-		if s.ID == id {
-			s.Name = newName
+	for i := range serv.students {
+		if serv.students[i].ID == id {
+			serv.students[i].Name = newName
 			return nil
 		}
 	}
