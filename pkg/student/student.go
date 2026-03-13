@@ -1,17 +1,26 @@
 package student
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Student struct {
-	ID            int64
-	TelegramLogin string
-	Name          string
-	TimeInQueue   time.Time
+	gorm.Model
+
+	Group         uint8  `gorm:"column:group_num"`
+	TgID          int64  `gorm:"column:tg_id;uniqueIndex"`
+	TelegramLogin string `gorm:"column:tg_login"`
+	Name          string `gorm:"column:name"`
+
+	TimeInQueue time.Time
 }
 
-func NewStudent(id int64, login string, name string) *Student {
+func NewStudent(id int64, group uint8, login string, name string) *Student {
 	return &Student{
-		ID:            id,
+		Group:         group,
+		TgID:          id,
 		TelegramLogin: login,
 		Name:          name,
 	}

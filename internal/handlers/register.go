@@ -2,19 +2,18 @@ package handlers
 
 import (
 	"fmt"
-
 	"suai-queue/internal/handlers/sessions"
-	"suai-queue/internal/service"
+	"suai-queue/internal/repository/students"
 	"suai-queue/pkg/student"
 
 	"gopkg.in/telebot.v3"
 )
 
-func RegisterHandler(db *service.StudentService, b *telebot.Bot) {
+func RegisterHandler(repo *students.StudentRepository, b *telebot.Bot) {
 	b.Handle("/register", func(c telebot.Context) error {
 		userID := c.Sender().ID
 
-		if db.Exists(userID) {
+		if repo.Exists(userID) {
 			return c.Send("Вы уже зарегистрированы! Приятного использования 😊", MainMenu)
 		}
 
@@ -23,7 +22,12 @@ func RegisterHandler(db *service.StudentService, b *telebot.Bot) {
 	})
 }
 
-func handleRegisterName(db *service.StudentService, c telebot.Context, userID int64, session *sessions.UserSession) error {
+func HandleRegisterName(
+	repo *students.StudentRepository,
+	c telebot.Context,
+	userID int64,
+) error {
+
 	name := c.Text()
 	if len([]rune(name)) < 2 {
 		return c.Send("Имя слишком короткое. Введите корректное имя:")
@@ -34,14 +38,14 @@ func handleRegisterName(db *service.StudentService, c telebot.Context, userID in
 		username = "NoUsername"
 	}
 
-	st := student.NewStudent(userID, username, name)
+	st := &student.Student{
+		TgID:          userID,
+		TelegramLogin: username,
+		Name:          name,
+	}
 
-	if err := db.Insert(st); err != nil {
-		if err == service.ErrStudentInDb {
-			sessions.Store.Delete(userID)
-			return c.Send("Вы уже зарегистрированы!", MainMenu)
-		}
-		return c.Send("Ошибка при сохранении данных. Попробуйте позже.")
+	if err := repo.Create(st); err != nil {
+		return c.Send("Ошибка при сохранении данных в базу. Попробуйте позже.")
 	}
 
 	sessions.Store.Delete(userID)
