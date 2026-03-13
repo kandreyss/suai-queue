@@ -7,9 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"suai-queue/internal/handlers"
-	"suai-queue/internal/repository/students"
-	"suai-queue/pkg/queue"
+	"suai-queue/internal/repository"
+	"suai-queue/internal/service/queue"
+	"suai-queue/internal/session"
+	"suai-queue/internal/transport/telegram"
 
 	"gopkg.in/telebot.v3"
 	"gorm.io/gorm"
@@ -17,22 +18,20 @@ import (
 
 type App struct {
 	bot               *telebot.Bot
-	studentRepository *students.StudentRepository
+	studentRepository *repository.StudentRepository
 	queue             *queue.Queue
+	sessionStore      *session.SessionStore
 	db                *gorm.DB
 	ctx               context.Context
 	cancel            context.CancelFunc
 }
 
-// New создает новое приложение
 func New() (*App, error) {
-	// Инициализация БД
 	db, err := setupDatabase()
 	if err != nil {
 		return nil, err
 	}
 
-	// Инициализация бота
 	bot, err := setupBot()
 	if err != nil {
 		return nil, err
@@ -42,8 +41,9 @@ func New() (*App, error) {
 
 	app := &App{
 		bot:               bot,
-		studentRepository: students.New(db),
+		studentRepository: repository.New(db),
 		queue:             queue.NewQueue(),
+		sessionStore:      session.NewSessionStore(),
 		db:                db,
 		ctx:               ctx,
 		cancel:            cancel,
@@ -52,7 +52,6 @@ func New() (*App, error) {
 	return app, nil
 }
 
-// Run запускает приложение
 func (a *App) Run() {
 	a.startServices()
 	a.registerHandlers()
@@ -62,11 +61,9 @@ func (a *App) Run() {
 	a.bot.Start()
 }
 
-// Close закрывает приложение
 func (a *App) Close() {
 	a.cancel()
 
-	// Закрытие БД
 	if a.db != nil {
 		sqlDB, err := a.db.DB()
 		if err == nil {
@@ -75,22 +72,15 @@ func (a *App) Close() {
 	}
 }
 
-// startServices запускает все сервисы
 func (a *App) startServices() {
 	setupQueueCleanup(a.ctx, a.bot, a.queue)
 }
 
-// registerHandlers регистрирует все обработчики
 func (a *App) registerHandlers() {
-	handlers.RegisterHandler(a.studentRepository, a.bot)
-	handlers.SettingsHandler(a.studentRepository, a.bot)
-	handlers.TextRouterHandler(a.studentRepository, a.queue, a.bot)
-	handlers.StartHandler(a.studentRepository, a.bot)
-	handlers.QueueHandlers(a.studentRepository, a.queue, a.bot)
-	handlers.HelpHandler(a.bot)
+	h := telegram.NewHandler(a.bot, a.studentRepository, a.queue, a.sessionStore)
+	h.Init()
 }
 
-// setupShutdown настраивает graceful shutdown
 func (a *App) setupShutdown() {
 	go func() {
 		sigChan := make(chan os.Signal, 1)

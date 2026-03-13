@@ -2,7 +2,7 @@ package database
 
 import (
 	"suai-queue/internal/config"
-	"suai-queue/pkg/student"
+	"suai-queue/internal/domain"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -14,7 +14,9 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	err = db.AutoMigrate(&student.Student{})
+	db.Exec("PRAGMA foreign_keys = ON")
+
+	err = db.AutoMigrate(&domain.Group{}, &domain.Student{})
 	if err != nil {
 		return nil, err
 	}

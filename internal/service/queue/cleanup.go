@@ -6,17 +6,17 @@ import (
 	"log"
 	"time"
 
-	"suai-queue/pkg/student"
+	"suai-queue/internal/domain"
 
 	"gopkg.in/telebot.v3"
 )
 
-func (q *Queue) Cleanup(predicate func(student.Student) bool) []student.Student {
+func (q *Queue) Cleanup(predicate func(domain.Student) bool) []domain.Student {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
 	kept := q.Users[:0]
-	removed := make([]student.Student, 0)
+	removed := make([]domain.Student, 0)
 
 	for _, s := range q.Users {
 		if predicate(s) {
@@ -28,12 +28,6 @@ func (q *Queue) Cleanup(predicate func(student.Student) bool) []student.Student 
 
 	q.Users = kept
 	return removed
-}
-
-func RemoveIfIdleTooLong(maxIdle time.Duration) func(student.Student) bool {
-	return func(s student.Student) bool {
-		return time.Since(s.TimeInQueue) >= maxIdle
-	}
 }
 
 func StartQueueCleanup(
@@ -54,12 +48,12 @@ func StartQueueCleanup(
 				return
 
 			case <-ticker.C:
-				removed := q.Cleanup(func(s student.Student) bool {
+				removed := q.Cleanup(func(s domain.Student) bool {
 					return time.Since(s.TimeInQueue) >= maxIdle
 				})
 
 				for _, s := range removed {
-					recipient := &telebot.User{ID: s.ID}
+					recipient := &telebot.User{ID: s.TgID}
 
 					text := fmt.Sprintf(
 						"%s, вы были удалены из очереди за бездействие (>%s). Нажмите «Встать в очередь», чтобы добавиться снова.",
@@ -68,7 +62,7 @@ func StartQueueCleanup(
 					)
 
 					if _, err := bot.Send(recipient, text); err != nil {
-						log.Printf("notify failed for user %d: %v\n", s.ID, err)
+						log.Printf("notify failed for user %d: %v\n", s.TgID, err)
 					}
 				}
 			}

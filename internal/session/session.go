@@ -1,6 +1,26 @@
-package sessions
+package session
 
 import "sync"
+
+const (
+	StateWaitingName     = "waiting_name"
+	StateWaitingGroup    = "waiting_group"
+	StateWaitingSetting  = "waiting_setting"
+	StateWaitingNewName  = "waiting_new_name"
+	StateWaitingNewGroup = "waiting_new_group"
+)
+
+type UserSession struct {
+	State    string
+	TempData map[string]string
+}
+
+func NewUserSession(state string) *UserSession {
+	return &UserSession{
+		State:    state,
+		TempData: make(map[string]string),
+	}
+}
 
 type SessionStore struct {
 	mu sync.RWMutex

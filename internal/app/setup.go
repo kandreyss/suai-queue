@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"suai-queue/internal/config"
-	"suai-queue/pkg/queue"
+	"suai-queue/internal/database"
+	"suai-queue/internal/service/queue"
 
 	"gopkg.in/telebot.v3"
+	"gorm.io/gorm"
 )
 
 func setupBot() (*telebot.Bot, error) {
@@ -35,6 +37,11 @@ func setBotCommands(b *telebot.Bot) error {
 		{Text: "settings", Description: "Настройки"},
 		{Text: "help", Description: "Список команд и помощь"},
 	})
+}
+
+func setupDatabase() (*gorm.DB, error) {
+	cfg := config.MustLoad()
+	return database.InitDB(cfg)
 }
 
 func setupQueueCleanup(ctx context.Context, bot *telebot.Bot, q *queue.Queue) {

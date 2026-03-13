@@ -1,22 +1,22 @@
 package queue
 
 import (
-	"suai-queue/pkg/student"
+	"suai-queue/internal/domain"
 	"sync"
 )
 
 type Queue struct {
-	Users []student.Student
+	Users []domain.Student
 	mutex sync.Mutex
 }
 
 func NewQueue() *Queue {
 	return &Queue{
-		Users: make([]student.Student, 0, 10),
+		Users: make([]domain.Student, 0, 10),
 	}
 }
 
-func (q *Queue) Pop() (*student.Student, error) {
+func (q *Queue) Pop() (*domain.Student, error) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
@@ -30,12 +30,12 @@ func (q *Queue) Pop() (*student.Student, error) {
 	return &firstUser, nil
 }
 
-func (q *Queue) Push(user *student.Student) (int, error) {
+func (q *Queue) Push(user *domain.Student) (int, error) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
 	for i, u := range q.Users {
-		if u.ID == user.ID {
+		if u.TgID == user.TgID {
 			return i + 1, ErrStudentInQueue
 		}
 	}
@@ -51,7 +51,7 @@ func (q *Queue) Remove(userID int64) error {
 
 	indexToRemove := -1
 	for i, user := range q.Users {
-		if user.ID == userID {
+		if user.TgID == userID {
 			indexToRemove = i
 			break
 		}
@@ -66,11 +66,23 @@ func (q *Queue) Remove(userID int64) error {
 	return nil
 }
 
-func (q *Queue) GetUsers() []student.Student {
+func (q *Queue) GetUsers() []domain.Student {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
-	usersCopy := make([]student.Student, len(q.Users))
+	usersCopy := make([]domain.Student, len(q.Users))
 	copy(usersCopy, q.Users)
 	return usersCopy
+}
+
+func (q *Queue) UpdateQueueUser(userID int64, updateFn func(*domain.Student)) {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
+
+	for i := range q.Users {
+		if q.Users[i].TgID == userID {
+			updateFn(&q.Users[i])
+			break
+		}
+	}
 }
