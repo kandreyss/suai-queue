@@ -19,7 +19,7 @@ import (
 type App struct {
 	bot               *telebot.Bot
 	studentRepository *repository.StudentRepository
-	queue             *queue.Queue
+	queues            *queue.QueueMap
 	sessionStore      *session.SessionStore
 	db                *gorm.DB
 	ctx               context.Context
@@ -42,7 +42,7 @@ func New() (*App, error) {
 	app := &App{
 		bot:               bot,
 		studentRepository: repository.New(db),
-		queue:             queue.NewQueue(),
+		queues:            queue.NewQueueMap(),
 		sessionStore:      session.NewSessionStore(),
 		db:                db,
 		ctx:               ctx,
@@ -73,11 +73,11 @@ func (a *App) Close() {
 }
 
 func (a *App) startServices() {
-	setupQueueCleanup(a.ctx, a.bot, a.queue)
+	setupQueueCleanup(a.ctx, a.bot, a.queues)
 }
 
 func (a *App) registerHandlers() {
-	h := telegram.NewHandler(a.bot, a.studentRepository, a.queue, a.sessionStore)
+	h := telegram.NewHandler(a.bot, a.studentRepository, a.queues, a.sessionStore)
 	h.Init()
 }
 

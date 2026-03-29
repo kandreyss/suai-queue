@@ -33,7 +33,7 @@ func (q *Queue) Cleanup(predicate func(domain.Student) bool) []domain.Student {
 func StartQueueCleanup(
 	ctx context.Context,
 	bot *telebot.Bot,
-	q *Queue,
+	qm *QueueMap,
 	interval time.Duration,
 	maxIdle time.Duration,
 ) {
@@ -48,21 +48,30 @@ func StartQueueCleanup(
 				return
 
 			case <-ticker.C:
-				removed := q.Cleanup(func(s domain.Student) bool {
-					return time.Since(s.TimeInQueue) >= maxIdle
-				})
+				qm.mutex.Lock()
+				queues := make([]*Queue, 0, len(qm.Queues))
+				for _, q := range qm.Queues {
+					queues = append(queues, q)
+				}
+				qm.mutex.Unlock()
 
-				for _, s := range removed {
-					recipient := &telebot.User{ID: s.TgID}
+				for _, q := range queues {
+					removed := q.Cleanup(func(s domain.Student) bool {
+						return time.Since(s.TimeInQueue) >= maxIdle
+					})
 
-					text := fmt.Sprintf(
-						"%s, вы были удалены из очереди за бездействие (>%s). Нажмите «Встать в очередь», чтобы добавиться снова.",
-						s.Name,
-						maxIdle.Round(time.Minute),
-					)
+					for _, s := range removed {
+						recipient := &telebot.User{ID: s.TgID}
 
-					if _, err := bot.Send(recipient, text); err != nil {
-						log.Printf("notify failed for user %d: %v\n", s.TgID, err)
+						text := fmt.Sprintf(
+							"%s, вы были удалены из очереди за бездействие (>%s). Нажмите «Встать в очередь», чтобы добавиться снова.",
+							s.Name,
+							maxIdle.Round(time.Minute),
+						)
+
+						if _, err := bot.Send(recipient, text); err != nil {
+							log.Printf("notify failed for user %d: %v\n", s.TgID, err)
+						}
 					}
 				}
 			}

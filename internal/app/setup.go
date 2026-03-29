@@ -44,6 +44,6 @@ func setupDatabase() (*gorm.DB, error) {
 	return database.InitDB(cfg)
 }
 
-func setupQueueCleanup(ctx context.Context, bot *telebot.Bot, q *queue.Queue) {
+func setupQueueCleanup(ctx context.Context, bot *telebot.Bot, q *queue.QueueMap) {
 	queue.StartQueueCleanup(ctx, bot, q, 10*time.Minute, 25*time.Minute)
 }

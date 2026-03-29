@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"suai-queue/internal/session"
 	"gopkg.in/telebot.v3"
+	"suai-queue/internal/session"
 )
 
 var (

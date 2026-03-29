@@ -6,6 +6,7 @@ import (
 )
 
 type Queue struct {
+	Group domain.Group
 	Users []domain.Student
 	mutex sync.Mutex
 }

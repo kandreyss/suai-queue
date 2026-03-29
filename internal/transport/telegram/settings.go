@@ -4,7 +4,9 @@ import (
 	"errors"
 	"suai-queue/internal/domain"
 	"suai-queue/internal/repository"
+	"suai-queue/internal/service/queue"
 	"suai-queue/internal/session"
+	"time"
 
 	"gopkg.in/telebot.v3"
 )
@@ -69,9 +71,17 @@ func (h *Handler) handleSettingUpdate(c telebot.Context, userID int64, sess *ses
 			return c.Send("Не удалось обновить имя. Попробуйте позже.", MainMenu)
 		}
 
-		h.Queue.UpdateQueueUser(userID, func(s *domain.Student) {
-			s.Name = newName
-		})
+		student, err := h.Repo.GetByTGID(userID)
+		if err == nil {
+			if groupQueue, qErr := h.Queues.RequireQueue(student.Group); qErr == nil {
+				groupQueue.UpdateQueueUser(userID, func(s *domain.Student) {
+					s.Name = newName
+				})
+			} else if !errors.Is(qErr, queue.ErrQueueNotFound) {
+				h.Session.Delete(userID)
+				return c.Send("Не удалось синхронизировать данные в очереди. Попробуйте позже.", MainMenu)
+			}
+		}
 
 		h.Session.Delete(userID)
 		return c.Send("Имя успешно обновлено ✅", MainMenu)
@@ -82,6 +92,14 @@ func (h *Handler) handleSettingUpdate(c telebot.Context, userID int64, sess *ses
 			return c.Send("Номер группы должен состоять минимум из 4-х символов.")
 		}
 
+		student, err := h.Repo.GetByTGID(userID)
+		if err != nil {
+			h.Session.Delete(userID)
+			return c.Send("Не удалось получить данные профиля. Попробуйте позже.", MainMenu)
+		}
+
+		oldGroup := student.Group
+
 		if err := h.Repo.UpdateGroup(userID, newGroup); err != nil {
 			h.Session.Delete(userID)
 			if errors.Is(err, repository.ErrGroupNotFound) {
@@ -90,9 +108,34 @@ func (h *Handler) handleSettingUpdate(c telebot.Context, userID int64, sess *ses
 			return c.Send("Не удалось обновить группу. Попробуйте позже.", MainMenu)
 		}
 
-		h.Queue.UpdateQueueUser(userID, func(s *domain.Student) {
-			s.Group = newGroup
-		})
+		oldQueue, qErr := h.Queues.RequireQueue(oldGroup)
+		switch {
+		case qErr == nil:
+			if rmErr := oldQueue.Remove(userID); rmErr == nil {
+				updatedStudent := &domain.Student{
+					TgID:          student.TgID,
+					TelegramLogin: student.TelegramLogin,
+					Name:          student.Name,
+					Group:         newGroup,
+					TimeInQueue:   time.Now(),
+				}
+
+				newQueue, ensureErr := h.Queues.EnsureQueue(newGroup)
+				if ensureErr != nil {
+					h.Session.Delete(userID)
+					return c.Send("Группа обновлена, но не удалось перенести в очередь новой группы.", MainMenu)
+				}
+
+				if _, pushErr := newQueue.Push(updatedStudent); pushErr != nil && !errors.Is(pushErr, queue.ErrStudentInQueue) {
+					h.Session.Delete(userID)
+					return c.Send("Группа обновлена, но не удалось перенести в очередь новой группы.", MainMenu)
+				}
+			}
+		case errors.Is(qErr, queue.ErrQueueNotFound):
+		default:
+			h.Session.Delete(userID)
+			return c.Send("Группа обновлена, но не удалось синхронизировать очередь.", MainMenu)
+		}
 
 		h.Session.Delete(userID)
 		return c.Send("Группа успешно обновлена ✅", MainMenu)

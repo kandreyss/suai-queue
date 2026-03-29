@@ -11,15 +11,15 @@ import (
 type Handler struct {
 	Bot     *telebot.Bot
 	Repo    *repository.StudentRepository
-	Queue   *queue.Queue
+	Queues   *queue.QueueMap
 	Session *session.SessionStore
 }
 
-func NewHandler(bot *telebot.Bot, repo *repository.StudentRepository, q *queue.Queue, sess *session.SessionStore) *Handler {
+func NewHandler(bot *telebot.Bot, repo *repository.StudentRepository, q *queue.QueueMap, sess *session.SessionStore) *Handler {
 	return &Handler{
 		Bot:     bot,
 		Repo:    repo,
-		Queue:   q,
+		Queues:   q,
 		Session: sess,
 	}
 }

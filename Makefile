@@ -1,9 +1,10 @@
-BIN=bin/suai-queue
+BIN_PATH=bin/suai-queue
 PATH_TO_MAIN=cmd/bot/main.go
 
 build:
-	rm -f bin/suai-queue
-	go build -o $(BIN) $(PATH_TO_MAIN)
+	rm -f $(BIN_PATH)
+	go build -o $(BIN_PATH) $(PATH_TO_MAIN)
+	strip $(BIN_PATH)
 
 run:
 	go run $(PATH_TO_MAIN)

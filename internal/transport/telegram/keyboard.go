@@ -8,7 +8,7 @@ var (
 	ButtonJoinInQueue = MainMenu.Text("➕Встать в очередь")
 	ButtonViewQueue   = MainMenu.Text("📋Посмотреть очередь")
 	ButtonLeave       = MainMenu.Text("➖Выйти из очереди")
-	ButtonInfo        = MainMenu.Text("Профиль")
+	ButtonInfo        = MainMenu.Text("ℹ️Инфо")
 )
 
 var (
